@@ -2,105 +2,76 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreTaskRequest;
-use App\Http\Requests\UpdateTaskRequest;
 use Illuminate\Http\Request;
 use App\Models\Task;
 
 class TaskController extends Controller
 {
+   public function index()
+   {
+       $tasks = Task::all();
 
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request, string $id)
-    {
-        #$primeiro = Task::first();  
-        #$todos = Task::all();  
-        #$com_id_2 = Task::find(2);
-        #$com_id_2->delete();
-        $task_do_id = Task::find($id);
-        if(!$task_do_id){
-            return "não existe";
-        }
-        return $task_do_id;
-    }
+       return response()->json($tasks);
+   }
 
-    public function criarTask()
-    {
-        $nova_task = new Task;
-        $nova_task->descricao = "Descricao teste";
-        $nova_task->save();
-    }
+   public function show($id)
+   {
+       $task = Task::find($id);
 
-    public function criarTaskPersonalizada(Request $request)
-    {
-        $nova_task = new Task;
-        #$nova_task->descricao = $request->input("descricao");
-        #$nova_task->descricao = $request->header("descricao");
-        $nova_task->save();
+       if ($task) {
+           return response()->json($task);
+       } else {
+           return response()->json(['error' => 'Tarefa não encontrada'], 404);
+       }
+   }
 
-        return $nova_task;
+   public function store(Request $request)
+   {
+       $request->validate([
+           'title' => 'required',
+           'description' => 'required',
+       ]);
 
-    }
+       $task = new Task;
+       $task->title = $request->input('title');
+       $task->description = $request->input('description');
+       $task->status = $request->input('status', false);
+       $task->save();
 
+       return response()->json($task, 201);
+   }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
+   public function update(Request $request, $id)
+   {
+       $task = Task::find($id);
 
-        $minhatask = Task::find(17);
-        $minhatask->descricao = "outracoisa";
-        $minhatask->delete();
-        
-    }
+       if ($task) {
+           $request->validate([
+               'title' => 'required',
+               'description' => 'required',
+           ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
+           $task->title = $request->input('title');
+           $task->description = $request->input('description');
+           $task->status = $request->input('status', $task->status);
+           $task->save();
 
-        $task = new Task;
-        
-        $task->descricao = $request->input("descricao");
-        
-        $task->save();
+           return response()->json($task);
+       } else {
+           return response()->json(['error' => 'Tarefa não encontrada'], 404);
+       }
+   }
 
-        return "OK";
-    }
+   public function destroy($id)
+   {
+       $task = Task::find($id);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Task $task)
-    {
-        //
-    }
+       if ($task) {
+           $task->delete();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Task $task)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateTaskRequest $request, Task $task)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Task $task)
-    {
-        //
-    }
+           return response()->json(['message' => 'Tarefa excluída com sucesso']);
+       } else {
+           return response()->json(['error' => 'Tarefa não encontrada'], 404);
+       }
+   }
 }
